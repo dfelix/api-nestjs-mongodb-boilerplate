@@ -4,8 +4,8 @@ import { plainToInstance } from 'class-transformer';
 import { FilterQuery, Model } from 'mongoose';
 import { PaginationParams } from 'src/core/pagination/decorators/pagination.decorator';
 import { SearchParams } from 'src/core/decorators/search.decorator';
-import { PaginatedList } from 'src/core/pagination/paginated-list';
-import { PaginationAggregation } from 'src/core/utils/query-filters';
+import { PaginatedList } from 'src/core/pagination/interfaces/paginated-list';
+import { PaginationAggregation } from 'src/core/pagination/pagination-aggregation';
 import { User } from './entities/user.entity';
 import { UserModel, UserDocument } from './schemas/user.schema';
 

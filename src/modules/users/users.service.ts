@@ -66,7 +66,7 @@ export class UsersService {
       { ...updateUserDto },
     );
     if (!user) throw new NotFoundException('user-not-found');
-    return;
+    return user;
   }
 
   async remove(id: string) {
