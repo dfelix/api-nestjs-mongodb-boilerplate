@@ -7,15 +7,18 @@ import {
   Param,
   Delete,
   UseInterceptors,
+  SerializeOptions,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import MongooseClassSerializerInterceptor from 'src/core/interceptors/mongooseClassSerializer.interceptor';
-import { User } from './schemas/user.schema';
-
+import { Search, SearchParams } from 'src/core/decorators/search.decorator';
+import {
+  Pagination,
+  PaginationParams,
+} from 'src/core/pagination/decorators/pagination.decorator';
 @Controller('users')
-@UseInterceptors(MongooseClassSerializerInterceptor(User))
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -25,8 +28,11 @@ export class UsersController {
   }
 
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  findAll(
+    @Pagination() pagination: PaginationParams,
+    @Search() search: SearchParams,
+  ) {
+    return this.usersService.findAll(pagination, search);
   }
 
   @Get(':id')
@@ -41,7 +47,6 @@ export class UsersController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    console.log('controller -> delete ', id);
     return this.usersService.remove(id);
   }
 }

@@ -1,7 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Exclude, Expose, Transform } from 'class-transformer';
 
-export type UserDocument = User & Document;
+export type UserDocument = UserModel & Document;
 
 @Schema({
   timestamps: true,
@@ -10,40 +9,28 @@ export type UserDocument = User & Document;
     virtuals: true,
   },
 })
-export class User {
-  @Exclude()
-  _id?: String;
-
-  @Exclude()
-  __v?: String;
-
+export class UserModel {
   @Prop({ required: true, unique: true, index: true })
   email?: string;
 
-  @Exclude()
   @Prop({ required: true })
   password?: string;
 
-  @Exclude()
   @Prop({ required: true, default: false })
   active?: boolean;
 
-  @Exclude()
   @Prop()
   activationAt?: Date;
 
-  @Exclude()
   @Prop()
   activationCode?: string;
 
   @Prop()
   roles?: string[];
 
-  @Exclude()
   @Prop({ required: true, default: false })
   archived?: boolean;
 
-  @Exclude()
   @Prop()
   resetToken?: string;
 
@@ -60,5 +47,5 @@ export class User {
   activatedAt?: Date;
 }
 
-export const UserSchema = SchemaFactory.createForClass(User);
+export const UserSchema = SchemaFactory.createForClass(UserModel);
 UserSchema.index({ email: 'text' });

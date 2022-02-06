@@ -8,9 +8,15 @@ import { FilterQuery, Model } from 'mongoose';
 import { RandomString } from 'src/core/utils/generate-string';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { User, UserDocument } from './schemas/user.schema';
+import { UserDocument } from './schemas/user.schema';
 import { UsersRepository } from './users.repository';
 import * as bcrypt from 'bcrypt';
+import {
+  Pagination,
+  PaginationParams,
+} from 'src/core/pagination/decorators/pagination.decorator';
+import { Search, SearchParams } from 'src/core/decorators/search.decorator';
+import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
@@ -38,8 +44,8 @@ export class UsersService {
     return this.usersRepository.create(newUser);
   }
 
-  async findAll() {
-    return this.usersRepository.findAll();
+  async findAll(pagination?: PaginationParams, search?: SearchParams) {
+    return this.usersRepository.findAll({}, pagination, search);
   }
 
   async findById(id: string) {
