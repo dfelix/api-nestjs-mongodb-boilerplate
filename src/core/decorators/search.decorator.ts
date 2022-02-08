@@ -33,6 +33,11 @@ export const Search = createParamDecorator(
 );
 
 export interface SearchParams {
-  search?: { field: string; value: string }[];
+  search?: SearchParam[];
   filter?: string;
+}
+
+export interface SearchParam {
+  field: string;
+  value: string;
 }

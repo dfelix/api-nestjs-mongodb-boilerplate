@@ -1,15 +1,71 @@
 import { FilterQuery, Model } from 'mongoose';
 import { PaginationParams } from './decorators/pagination.decorator';
-import { SearchParams } from '../decorators/search.decorator';
+import { SearchParam, SearchParams } from '../decorators/search.decorator';
 
 export class PaginationAggregation {
-  static getQuery(
+  static getDefaultPipeline(
     filterQuery: FilterQuery<any>,
     paginationParams?: PaginationParams,
     searchParams?: SearchParams,
+    fields?: string[],
   ): any {
-    const aggregation = [];
+    let pipeline = [];
 
+    // return _id as id
+    pipeline.push({
+      $addFields: { id: '$_id' },
+    });
+
+    // base filter
+    if (Object.keys(filterQuery).length > 0)
+      pipeline.push({ $match: { $and: filterQuery } });
+
+    // text filter
+    if (Object.keys(searchParams.filter).length > 0)
+      pipeline.push(this.getFilterStage(fields, searchParams.filter));
+
+    // search in fields
+    if (Object.keys(searchParams.search).length > 0)
+      pipeline.push(this.getSearchStage(searchParams.search));
+
+    // pagination
+    if (Object.keys(paginationParams).length > 0)
+      pipeline = pipeline.concat(this.getPaginationStages(paginationParams));
+
+    return pipeline;
+  }
+
+  static getFilterStage(fields: string[], text?: string) {
+    if (!text || text === '' || fields.length === 0) return { $match: {} };
+    const regex = new RegExp(text, 'i');
+    console.log(regex);
+    const items = [];
+    fields.forEach((field) => {
+      let item = {};
+      item[field] = {
+        $regex: text,
+        $options: 'i',
+      };
+      items.push(item);
+    });
+    // return { $match: { $and: [{ $or: or }] } };
+    return { $match: { $and: items } };
+  }
+
+  static getSearchStage(params: SearchParam[]) {
+    if (!params || params.length === 0) return { $match: {} };
+    const items = [];
+    params.forEach((param) => {
+      let item = {};
+      item[param.field] = param.value;
+      items.push(item);
+    });
+    // return { $match: { $and: [{ $or: items }] } };
+    return { $match: { $and: items } };
+  }
+
+  static getPaginationStages(paginationParams?: PaginationParams) {
+    const stages = [];
     // sort, skip, limit
     if (paginationParams) {
       // &sort=+email
@@ -18,51 +74,17 @@ export class PaginationAggregation {
         paginationParams.sort.forEach((item) => {
           sort[item.field] = item.by === 'ASC' ? 1 : -1;
         });
-        aggregation.push({ $sort: sort });
+        stages.push({ $sort: sort });
       }
 
       if (paginationParams.skip) {
-        aggregation.push({ $skip: paginationParams.skip });
+        stages.push({ $skip: paginationParams.skip });
       }
 
       if (paginationParams.limit) {
-        aggregation.push({ $limit: paginationParams.limit });
+        stages.push({ $limit: paginationParams.limit });
       }
     }
-
-    // match
-    if (searchParams) {
-      const or = [];
-
-      if (filterQuery && Object.keys(filterQuery).length > 0) {
-        or.push(filterQuery);
-      }
-
-      if (searchParams.search && searchParams.search.length > 0) {
-        searchParams.search.forEach((item) => {
-          let i = {};
-          i[item.field] = item.value;
-          or.push(i);
-        });
-      }
-
-      const match: any = {};
-
-      if (searchParams.filter) {
-        match.$text = {
-          $search: searchParams.filter.trim(),
-        };
-      }
-
-      if (or.length > 0) {
-        match.$or = or;
-      }
-
-      aggregation.unshift({
-        $match: match,
-      });
-    }
-
-    return aggregation;
+    return stages;
   }
 }

@@ -1,4 +1,4 @@
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Transform } from 'class-transformer';
 
 @Exclude()
 export class User {
@@ -23,8 +23,10 @@ export class User {
 
   resetToken?: string;
 
+  @Expose()
   createdAt?: Date;
 
+  @Expose()
   updatedAt?: Date;
 
   lastLoginAt?: Date;

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { plainToInstance } from 'class-transformer';
+import { plainToClass, plainToInstance } from 'class-transformer';
 import { FilterQuery, Model } from 'mongoose';
 import { PaginationParams } from 'src/core/pagination/decorators/pagination.decorator';
 import { SearchParams } from 'src/core/decorators/search.decorator';
@@ -24,13 +24,15 @@ export class UsersRepository {
     pagination?: PaginationParams,
     search?: SearchParams,
   ): Promise<PaginatedList<User>> {
-    const query = PaginationAggregation.getQuery(
+    const pipeline = PaginationAggregation.getDefaultPipeline(
       userFilterQuery,
       pagination,
       search,
+      ['email'],
     );
-    const users = await this.userModel.aggregate(query);
-    const length = await this.userModel.count(query);
+    const users = await this.userModel.aggregate(pipeline);
+
+    const length = await this.userModel.count(pipeline);
 
     return {
       data: plainToInstance(User, users),
