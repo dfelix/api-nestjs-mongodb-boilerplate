@@ -1,22 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { plainToClass, plainToInstance } from 'class-transformer';
 import { FilterQuery, Model } from 'mongoose';
 import { PaginationParams } from 'src/core/pagination/decorators/pagination.decorator';
 import { SearchParams } from 'src/core/decorators/search.decorator';
 import { PaginatedList } from 'src/core/pagination/interfaces/paginated-list';
 import { PaginationAggregation } from 'src/core/pagination/pagination-aggregation';
 import { User } from './entities/user.entity';
-import { UserModel, UserDocument } from './schemas/user.schema';
+import { UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class UsersRepository {
   constructor(@InjectModel('User') private userModel: Model<UserDocument>) {}
 
-  async create(user: UserModel): Promise<User> {
+  async create(user: User): Promise<User> {
     const newUser = new this.userModel(user);
     await newUser.save();
-    return plainToInstance(User, newUser);
+    return new User(newUser.toObject());
   }
 
   async findAll(
@@ -35,7 +34,9 @@ export class UsersRepository {
     const length = await this.userModel.count(pipeline);
 
     return {
-      data: plainToInstance(User, users),
+      data: users.map((u) => {
+        return new User(u);
+      }),
       pagination: {
         length,
         pageSize: pagination.limit,
@@ -45,31 +46,51 @@ export class UsersRepository {
   }
 
   async findById(id: string): Promise<User> {
-    const user = await this.userModel.findById(id);
-    return plainToInstance(User, user);
+    const user = await this.userModel.findById(id).lean({ virtuals: true });
+    if (user && Object.keys(user).length > 0) return new User(user);
+    return;
   }
 
-  async findOne(userFilterQuery: FilterQuery<UserModel>): Promise<User> {
-    const user = await this.userModel.findOne(userFilterQuery);
-    return plainToInstance(User, user);
+  async findOne(userFilterQuery: FilterQuery<User>): Promise<User> {
+    const user = await this.userModel
+      .findOne(userFilterQuery)
+      .lean({ virtuals: true });
+    if (user && Object.keys(user).length > 0) return new User(user);
+    return;
   }
 
-  async update(
-    userFilterQuery: FilterQuery<UserModel>,
-    user: UserModel,
-  ): Promise<User> {
-    const updatedUser = await this.userModel.findOneAndUpdate(
-      userFilterQuery,
-      user,
-      {
+  async update(userFilterQuery: FilterQuery<User>, user: User): Promise<User> {
+    const updatedUser = await this.userModel
+      .findOneAndUpdate(userFilterQuery, user, {
         new: true,
-      },
-    );
-    return plainToInstance(User, updatedUser);
+      })
+      .lean({ virtuals: true });
+    if (updatedUser && Object.keys(updatedUser).length > 0)
+      return new User(updatedUser);
+    return;
   }
 
-  async remove(userFilterQuery: FilterQuery<UserModel>): Promise<User> {
-    const removedUser = await this.userModel.findOneAndDelete(userFilterQuery);
-    return plainToInstance(User, removedUser);
+  async remove(userFilterQuery: FilterQuery<User>): Promise<User> {
+    const removedUser = await this.userModel
+      .findOneAndDelete(userFilterQuery)
+      .lean({ virtuals: true });
+    if (removedUser && Object.keys(removedUser).length > 0)
+      return new User(removedUser);
+    return;
+  }
+
+  async setActivation(usersFilterQuery: FilterQuery<User>) {
+    const user = await this.userModel.findOne(usersFilterQuery);
+    user.set('activationCode', undefined);
+    user.set('active', true);
+    user.set('activatedAt', new Date());
+    await user.save();
+  }
+
+  async setPassword(usersFilterQuery: FilterQuery<User>, password: string) {
+    const user = await this.userModel.findOne(usersFilterQuery);
+    user.set('resetToken', undefined);
+    user.set('password', password);
+    await user.save();
   }
 }

@@ -8,7 +8,7 @@ import { FilterQuery, Model } from 'mongoose';
 import { RandomString } from 'src/core/utils/generate-string';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserDocument } from './schemas/user.schema';
+import { UserDocument, UserModel } from './schemas/user.schema';
 import { UsersRepository } from './users.repository';
 import * as bcrypt from 'bcrypt';
 import {
@@ -27,6 +27,7 @@ export class UsersService {
     const user = await this.usersRepository.findOne({
       email: createUserDto.email,
     });
+
     if (user) throw new ConflictException('user-already-exists');
 
     // hash password
@@ -49,7 +50,7 @@ export class UsersService {
   }
 
   async findById(id: string) {
-    const user: User = await this.usersRepository.findById(id);
+    const user: UserModel = await this.usersRepository.findById(id);
     if (!user) throw new NotFoundException('user-not-found');
     return user;
   }
@@ -73,5 +74,31 @@ export class UsersService {
     const user: User = await this.usersRepository.remove({ _id: id });
     if (!user) throw new NotFoundException('user-not-found');
     return user;
+  }
+
+  async activation(id: string, code: string): Promise<any> {
+    const user: User = await this.usersRepository.findOne({ _id: id, code });
+    if (!user) throw new NotFoundException('user-not-found');
+    if (user.active) throw new NotFoundException('user-already-active');
+    return this.usersRepository.setActivation({ _id: id, code });
+  }
+
+  async activationReset(userFilterQuery: FilterQuery<User>): Promise<any> {
+    return await this.usersRepository.update(userFilterQuery, {
+      active: false,
+      activationCode: RandomString.generate(5),
+    });
+  }
+
+  async passwordReset(userFilterQuery: FilterQuery<User>): Promise<any> {
+    return await this.usersRepository.update(userFilterQuery, {
+      resetToken: RandomString.generate(10),
+    });
+  }
+
+  async passwordReplace(email: string, password: string): Promise<any> {
+    const user: User = await this.usersRepository.findOne({ email });
+    if (!user) throw new NotFoundException('user-not-found');
+    return await this.usersRepository.setPassword({ email }, password);
   }
 }

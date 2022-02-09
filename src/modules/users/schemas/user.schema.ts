@@ -1,13 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import * as leanVirtuals from 'mongoose-lean-virtuals';
 
 export type UserDocument = UserModel & Document;
 
 @Schema({
   timestamps: true,
-  toJSON: {
-    getters: true,
-    virtuals: true,
-  },
+  toObject: { virtuals: true },
 })
 export class UserModel {
   @Prop({ required: true, unique: true, index: true })
@@ -48,4 +46,11 @@ export class UserModel {
 }
 
 export const UserSchema = SchemaFactory.createForClass(UserModel);
+
 UserSchema.index({ email: 'text' });
+
+UserSchema.virtual('id').get(function () {
+  return this._id;
+});
+
+UserSchema.plugin(leanVirtuals);

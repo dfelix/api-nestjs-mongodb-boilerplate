@@ -13,7 +13,9 @@ export class PaginationAggregation {
 
     // return _id as id
     pipeline.push({
-      $addFields: { id: '$_id' },
+      $addFields: {
+        id: { $toString: '$_id' },
+      },
     });
 
     // base filter
@@ -37,8 +39,6 @@ export class PaginationAggregation {
 
   static getFilterStage(fields: string[], text?: string) {
     if (!text || text === '' || fields.length === 0) return { $match: {} };
-    const regex = new RegExp(text, 'i');
-    console.log(regex);
     const items = [];
     fields.forEach((field) => {
       let item = {};

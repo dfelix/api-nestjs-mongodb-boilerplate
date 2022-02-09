@@ -18,6 +18,8 @@ import {
   Pagination,
   PaginationParams,
 } from 'src/core/pagination/decorators/pagination.decorator';
+
+@UseInterceptors(ClassSerializerInterceptor)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

@@ -2,6 +2,10 @@ import { Exclude, Expose, Transform } from 'class-transformer';
 
 @Exclude()
 export class User {
+  constructor(partial: Partial<User>) {
+    Object.assign(this, partial);
+  }
+
   @Expose()
   id?: string;
 
