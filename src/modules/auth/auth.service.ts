@@ -17,10 +17,10 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
-    console.log('validate');
     const user: User = await this.usersService.findOne({ email });
+    if (!user) throw new NotFoundException('user-not-found');
+
     const match = await bcrypt.compare(password, user.password);
-    console.log(password);
 
     if (match) {
       return {
@@ -33,7 +33,6 @@ export class AuthService {
   }
 
   async signPayload(user: User) {
-    console.log('signPayload', user);
     const payload = {
       id: user.id,
       email: user.email,
@@ -46,11 +45,9 @@ export class AuthService {
   }
 
   async register(registrationData: RegisterDto) {
-    const hashedPassword = await bcrypt.hash(registrationData.password, 10);
-
     const createdUser: User = await this.usersService.create({
       email: registrationData.email,
-      password: hashedPassword,
+      password: registrationData.password,
     });
 
     const response = new RegisterResponse();
@@ -93,9 +90,6 @@ export class AuthService {
       throw new NotFoundException('user-not-found');
 
     const hashedPassword = await bcrypt.hash(registrationData.password, 10);
-
-    console.log(registrationData.password);
-    console.log(hashedPassword);
 
     await this.usersService.passwordReplace(user.email, hashedPassword);
 
