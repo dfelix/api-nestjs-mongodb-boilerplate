@@ -32,6 +32,8 @@ export class UsersRepository {
 
     const result = await this.userModel.aggregate(pipeline);
 
+    if (result.length === 0) throw new Error('Invalid Aggregation');
+
     return {
       data: result[0].data.map((u: Partial<User>) => {
         return new User(u);
