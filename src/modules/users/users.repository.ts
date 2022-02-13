@@ -29,16 +29,15 @@ export class UsersRepository {
       search,
       ['email'],
     );
-    const users = await this.userModel.aggregate(pipeline);
 
-    const length = await this.userModel.count(pipeline);
+    const result = await this.userModel.aggregate(pipeline);
 
     return {
-      data: users.map((u) => {
+      data: result[0].data.map((u: Partial<User>) => {
         return new User(u);
       }),
       pagination: {
-        length,
+        length: result[0].total,
         pageSize: pagination.limit,
         limit: pagination.limit,
       },

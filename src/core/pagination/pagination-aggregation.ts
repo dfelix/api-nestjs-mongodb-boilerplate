@@ -77,13 +77,24 @@ export class PaginationAggregation {
         stages.push({ $sort: sort });
       }
 
-      if (paginationParams.skip) {
-        stages.push({ $skip: paginationParams.skip });
-      }
+      const skip = paginationParams.skip || 0;
+      const limit = paginationParams.limit || 20;
+      // facet
+      stages.push({
+        $facet: {
+          metadata: [{ $count: 'total' }],
+          data: [{ $skip: skip }, { $limit: limit }],
+        },
+      });
 
-      if (paginationParams.limit) {
-        stages.push({ $limit: paginationParams.limit });
-      }
+      // project
+      stages.push({
+        $project: {
+          data: 1,
+          // Get total from the first element of the metadata array
+          total: { $arrayElemAt: ['$metadata.total', 0] },
+        },
+      });
     }
     return stages;
   }
