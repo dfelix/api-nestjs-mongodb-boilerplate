@@ -14,6 +14,9 @@ export class User {
 
   password?: string;
 
+  @Expose()
+  imageUrl?: string;
+
   active?: boolean;
 
   activationAt?: Date;

@@ -14,6 +14,9 @@ export class UserModel {
   @Prop({ required: true })
   password?: string;
 
+  @Prop()
+  imageUrl?: string;
+
   @Prop({ required: true, default: false })
   active?: boolean;
 
